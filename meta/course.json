@@ -1,0 +1,32 @@
+{
+  "title": "PyPath · 从 Python 到算法",
+  "python": ">=3.11",
+  "stages": [
+    {
+      "id": "foundations",
+      "title": "Python 基础语法",
+      "count": 8,
+      "completion": "浏览器评测的全部用例通过"
+    },
+    {
+      "id": "projects",
+      "title": "Python 实战项目",
+      "count": 6,
+      "completion": "本地 CLI 验证产物与行为，并签发通过凭证"
+    },
+    {
+      "id": "algorithms",
+      "title": "算法与数据结构",
+      "count": 65,
+      "completion": "在 LeetCode 完成题目后手动记录"
+    }
+  ],
+  "projects": [
+    {"id": "file-organizer", "folder": "learning/projects/01-file-organizer", "verifier": "file-organizer", "token": "PYPATH-FILE-7F2A"},
+    {"id": "expense-report", "folder": "learning/projects/02-expense-report", "verifier": "expense-report", "token": "PYPATH-DATA-91C4"},
+    {"id": "offline-api", "folder": "learning/projects/03-offline-api", "verifier": "offline-api", "token": "PYPATH-HTTP-3BD8"},
+    {"id": "log-analyzer", "folder": "learning/projects/04-log-analyzer", "verifier": "log-analyzer", "token": "PYPATH-LOGS-6E10"},
+    {"id": "batch-renamer", "folder": "learning/projects/05-batch-renamer", "verifier": "batch-renamer", "token": "PYPATH-NAME-A54D"},
+    {"id": "backup-manifest", "folder": "learning/projects/06-backup-manifest", "verifier": "backup-manifest", "token": "PYPATH-HASH-C208"}
+  ]
+}

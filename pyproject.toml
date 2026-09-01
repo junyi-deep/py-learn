@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pypath-learn"
+version = "0.1.0"
+description = "PyPath 本地学习项目与自动验收 CLI"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+pylearn = "py_learn.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["meta"]
+include = ["py_learn*"]

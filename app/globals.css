@@ -1,0 +1,152 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-geist-sans);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-mint: var(--mint);
+  --color-mint-dark: var(--mint-dark);
+  --color-mint-pale: var(--mint-pale);
+  --color-amber: var(--amber);
+  --color-amber-dark: var(--amber-dark);
+  --color-amber-pale: var(--amber-pale);
+  --color-violet: var(--violet);
+  --color-violet-dark: var(--violet-dark);
+  --color-violet-pale: var(--violet-pale);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.65);
+  --radius-md: calc(var(--radius) * 0.82);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.75);
+  --radius-3xl: calc(var(--radius) * 2.15);
+}
+
+:root {
+  --background: #f5f2e9;
+  --foreground: #17233c;
+  --cream: #f5f2e9;
+  --ink: #17233c;
+  --mint: #6ee7bd;
+  --mint-dark: #13795b;
+  --mint-pale: #dcf8ee;
+  --amber: #ffc76c;
+  --amber-dark: #9a5b00;
+  --amber-pale: #fff0d2;
+  --violet: #b8a7ff;
+  --violet-dark: #5c48ad;
+  --violet-pale: #ebe6ff;
+  --card: #ffffff;
+  --card-foreground: #17233c;
+  --popover: #ffffff;
+  --popover-foreground: #17233c;
+  --primary: #17233c;
+  --primary-foreground: #ffffff;
+  --secondary: #e9e5da;
+  --secondary-foreground: #17233c;
+  --muted: #e9e5da;
+  --muted-foreground: #667087;
+  --accent: #dcf8ee;
+  --accent-foreground: #13795b;
+  --destructive: #c83d54;
+  --border: rgba(23, 35, 60, 0.12);
+  --input: rgba(23, 35, 60, 0.16);
+  --ring: #35c39a;
+  --radius: 0.85rem;
+}
+
+.dark {
+  --background: #101827;
+  --foreground: #f6f3ea;
+  --cream: #101827;
+  --ink: #f6f3ea;
+  --card: #17233c;
+  --card-foreground: #f6f3ea;
+  --popover: #17233c;
+  --popover-foreground: #f6f3ea;
+  --primary: #6ee7bd;
+  --primary-foreground: #101827;
+  --secondary: #22304a;
+  --secondary-foreground: #f6f3ea;
+  --muted: #22304a;
+  --muted-foreground: #aab2c0;
+  --accent: #23483f;
+  --accent-foreground: #aaf1d7;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: #6ee7bd;
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html { @apply font-sans; scroll-behavior: smooth; }
+  body { @apply bg-background text-foreground; min-width: 320px; }
+  ::selection { background: var(--mint); color: #17233c; }
+}
+
+.atlas-grid {
+  background-image:
+    linear-gradient(rgba(23, 35, 60, .032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 35, 60, .032) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.stage-mint .stage-icon { background: var(--mint); }
+.stage-mint .stage-dot { background: var(--mint); }
+.stage-amber .stage-icon { background: var(--amber); }
+.stage-amber .stage-dot { background: var(--amber); }
+.stage-violet .stage-icon { background: var(--violet); }
+.stage-violet .stage-dot { background: var(--violet); }
+
+@media (min-width: 1024px) {
+  .roadmap-branches::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 50%;
+    width: 28px;
+    height: 1px;
+    background: rgba(255, 255, 255, .2);
+  }
+  .stage-card::before {
+    content: '';
+    position: absolute;
+    left: -16px;
+    top: 50%;
+    width: 16px;
+    height: 1px;
+    background: rgba(255, 255, 255, .18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

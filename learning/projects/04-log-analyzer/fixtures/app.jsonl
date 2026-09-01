@@ -1,0 +1,6 @@
+{"level":"INFO","path":"/","duration_ms":120}
+{"level":"ERROR","path":"/pay","duration_ms":800}
+{"level":"INFO","path":"/pay","duration_ms":150}
+this is not json
+{"level":"WARN","path":"/login","duration_ms":400}
+{"level":"ERROR","path":"/pay","duration_ms":650}
