@@ -12,5 +12,5 @@
 只修改 `solution.py`。完成后在项目根目录运行：
 
 ```bash
-pylearn check file-organizer
+uv run pylearn check file-organizer
 ```

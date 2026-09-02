@@ -251,7 +251,7 @@ export const projects: ProjectInfo[] = [
     folder: 'learning/projects/01-file-organizer',
     files: ['solution.py', 'fixtures/inbox.txt', 'README.md'],
     acceptance: ['TXT 与 txt 归为同一类', '无扩展名文件进入 other', 'output/plan.json 按文件名稳定排序'],
-    command: 'pylearn check file-organizer',
+    command: 'uv run pylearn check file-organizer',
     token: 'PYPATH-FILE-7F2A',
   },
   {
@@ -264,7 +264,7 @@ export const projects: ProjectInfo[] = [
     folder: 'learning/projects/02-expense-report',
     files: ['solution.py', 'fixtures/expenses.csv', 'README.md'],
     acceptance: ['金额使用 Decimal 计算', '类别按名称排序', '总额与分类汇总写入 output/summary.json'],
-    command: 'pylearn check expense-report',
+    command: 'uv run pylearn check expense-report',
     token: 'PYPATH-DATA-91C4',
   },
   {
@@ -277,7 +277,7 @@ export const projects: ProjectInfo[] = [
     folder: 'learning/projects/03-offline-api',
     files: ['solution.py', 'README.md'],
     acceptance: ['URL 只从 PYPATH_API_URL 读取', '请求设置 2 秒超时', 'output/profile.json 字段完整且无额外输出'],
-    command: 'pylearn check offline-api',
+    command: 'uv run pylearn check offline-api',
     token: 'PYPATH-HTTP-3BD8',
   },
   {
@@ -290,7 +290,7 @@ export const projects: ProjectInfo[] = [
     folder: 'learning/projects/04-log-analyzer',
     files: ['solution.py', 'fixtures/app.jsonl', 'README.md'],
     acceptance: ['损坏行计入 invalid_lines 而不崩溃', '级别计数正确', 'output/report.json 使用稳定字段顺序'],
-    command: 'pylearn check log-analyzer',
+    command: 'uv run pylearn check log-analyzer',
     token: 'PYPATH-LOGS-6E10',
   },
   {
@@ -303,7 +303,7 @@ export const projects: ProjectInfo[] = [
     folder: 'learning/projects/05-batch-renamer',
     files: ['solution.py', 'fixtures/names.txt', 'README.md'],
     acceptance: ['空格与下划线统一为连字符', '扩展名保持小写', '冲突追加 -2 且不覆盖原文件'],
-    command: 'pylearn check batch-renamer',
+    command: 'uv run pylearn check batch-renamer',
     token: 'PYPATH-NAME-A54D',
   },
   {
@@ -316,7 +316,7 @@ export const projects: ProjectInfo[] = [
     folder: 'learning/projects/06-backup-manifest',
     files: ['solution.py', 'fixtures/source/', 'README.md'],
     acceptance: ['忽略隐藏文件与 .tmp', '使用分块读取计算哈希', 'output/manifest.json 按相对路径排序'],
-    command: 'pylearn check backup-manifest',
+    command: 'uv run pylearn check backup-manifest',
     token: 'PYPATH-HASH-C208',
   },
 ];

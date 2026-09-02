@@ -10,5 +10,5 @@
 - CSV 列固定为 `original,new_name`，保持输入顺序
 
 ```bash
-pylearn check batch-renamer
+uv run pylearn check batch-renamer
 ```

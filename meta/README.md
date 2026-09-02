@@ -6,9 +6,9 @@
 - `py_learn/`：`pylearn` 命令的实现
 - `progress.json`：CLI 验收通过的本地项目（可随时由验收器重建）
 
-安装命令：
+使用 uv 初始化并检查：
 
 ```bash
-python -m pip install -e .
-pylearn doctor
+uv sync
+uv run pylearn doctor
 ```

@@ -11,5 +11,5 @@
 - 顶层 `file_count` 与 files 数量一致
 
 ```bash
-pylearn check backup-manifest
+uv run pylearn check backup-manifest
 ```

@@ -9,5 +9,5 @@
 - 金额写成两位小数字符串；类别按名称排序
 
 ```bash
-pylearn check expense-report
+uv run pylearn check expense-report
 ```

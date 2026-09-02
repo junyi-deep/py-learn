@@ -17,7 +17,7 @@ def fetch_profile(url: str) -> dict:
 def main() -> None:
     url = os.environ.get("PYPATH_API_URL")
     if not url:
-        raise RuntimeError("缺少 PYPATH_API_URL；请用 pylearn check offline-api 运行")
+        raise RuntimeError("缺少 PYPATH_API_URL；请用 uv run pylearn check offline-api 运行")
     profile = fetch_profile(url)
     output = Path("output/profile.json")
     output.parent.mkdir(parents=True, exist_ok=True)

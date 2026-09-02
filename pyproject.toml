@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
 
 [project]
 name = "pypath-learn"
@@ -13,6 +13,6 @@ dependencies = []
 [project.scripts]
 pylearn = "py_learn.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["meta"]
-include = ["py_learn*"]
+[tool.uv.build-backend]
+module-name = "py_learn"
+module-root = "meta"

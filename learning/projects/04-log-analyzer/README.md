@@ -10,5 +10,5 @@
 - `invalid_lines`：无法解析的行数
 
 ```bash
-pylearn check log-analyzer
+uv run pylearn check log-analyzer
 ```

@@ -9,5 +9,5 @@
 - 输出 `display`（格式 `Ada (#7)`）、`skill_count` 和 `active`
 
 ```bash
-pylearn check offline-api
+uv run pylearn check offline-api
 ```

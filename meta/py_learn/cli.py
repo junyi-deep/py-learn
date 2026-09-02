@@ -13,6 +13,8 @@ from .verifiers import VerificationResult, verify_project
 ROOT = Path(__file__).resolve().parents[2]
 COURSE_FILE = ROOT / "meta" / "course.json"
 PROGRESS_FILE = ROOT / "meta" / "progress.json"
+PACKAGE_LOCK_FILE = ROOT / "package-lock.json"
+NODE_MODULES_MARKER = ROOT / "node_modules" / ".package-lock.json"
 
 
 def load_course() -> dict:
@@ -90,7 +92,7 @@ def command_check(args: argparse.Namespace) -> int:
     project = project_by_id(args.project_id)
     if project is None:
         print(f"未知项目：{args.project_id}", file=sys.stderr)
-        print("运行 pylearn projects 查看可用项目。", file=sys.stderr)
+        print("运行 uv run pylearn projects 查看可用项目。", file=sys.stderr)
         return 2
     project_dir = ROOT / project["folder"]
     print(f"正在验收 {args.project_id} …")
@@ -108,6 +110,7 @@ def command_check(args: argparse.Namespace) -> int:
 def command_doctor(_: argparse.Namespace) -> int:
     checks = [
         (sys.version_info >= (3, 11), f"Python {sys.version.split()[0]}（需要 3.11+）"),
+        (shutil.which("uv") is not None, "uv"),
         (COURSE_FILE.exists(), "课程配置 meta/course.json"),
         (shutil.which("node") is not None, "Node.js"),
         (shutil.which("npm") is not None, "npm"),
@@ -118,14 +121,43 @@ def command_doctor(_: argparse.Namespace) -> int:
     return 0 if all(ok for ok, _ in checks) else 1
 
 
-def command_serve(_: argparse.Namespace) -> int:
+def ensure_web_dependencies() -> int:
     if shutil.which("npm") is None:
         print("没有找到 npm，请先安装 Node.js 22.13+。", file=sys.stderr)
         return 2
+
+    dependencies_are_stale = (
+        not NODE_MODULES_MARKER.exists()
+        or (
+            PACKAGE_LOCK_FILE.exists()
+            and PACKAGE_LOCK_FILE.stat().st_mtime > NODE_MODULES_MARKER.stat().st_mtime
+        )
+    )
+    if dependencies_are_stale:
+        print("正在根据 package-lock.json 安装网页依赖 …")
+        return subprocess.call(
+            ["npm", "ci", "--no-audit", "--no-fund"],
+            cwd=ROOT,
+        )
+    return 0
+
+
+def run_web_script(script: str) -> int:
     try:
-        return subprocess.call(["npm", "run", "dev"], cwd=ROOT)
+        dependency_result = ensure_web_dependencies()
+        if dependency_result != 0:
+            return dependency_result
+        return subprocess.call(["npm", "run", script], cwd=ROOT)
     except KeyboardInterrupt:
         return 130
+
+
+def command_serve(_: argparse.Namespace) -> int:
+    return run_web_script("dev")
+
+
+def command_build(_: argparse.Namespace) -> int:
+    return run_web_script("build")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -151,6 +183,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     serve = subparsers.add_parser("serve", help="启动学习网站")
     serve.set_defaults(handler=command_serve)
+
+    build = subparsers.add_parser("build", help="构建生产版学习网站")
+    build.set_defaults(handler=command_build)
     return parser
 
 
