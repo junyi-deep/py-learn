@@ -44,3 +44,4 @@ __pycache__/
 *.egg-info/
 *.tsbuildinfo
 /learning/projects/*/output/
+/meta/progress.json

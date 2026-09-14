@@ -1,7 +1,9 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { algorithmCategories, builtinAlgorithmCount, foundationChapters, projects, type Difficulty } from '@/lib/course-data';
+import { algorithmCategories, builtinAlgorithmCount, projects, type Difficulty } from '@/lib/course-data';
+import { foundationChapterCatalog } from '@/lib/foundation-catalog';
+import { foundationPractice } from '@/lib/foundation-practice';
 
 export type CustomProblem = {
   id: string;
@@ -12,7 +14,9 @@ export type CustomProblem = {
 };
 
 type ProgressState = {
+  foundationRevision: number;
   foundations: string[];
+  foundationExercises: string[];
   projects: string[];
   algorithms: string[];
   customProblems: CustomProblem[];
@@ -24,7 +28,7 @@ type CourseProgressContextValue = ProgressState & {
   projectPercent: number;
   algorithmPercent: number;
   totalPercent: number;
-  completeFoundation: (id: string) => void;
+  completeFoundationExercise: (chapterId: string, exerciseId: string) => void;
   completeProject: (id: string) => void;
   toggleAlgorithm: (id: string) => void;
   addCustomProblem: (problem: Omit<CustomProblem, 'id'>) => void;
@@ -32,17 +36,44 @@ type CourseProgressContextValue = ProgressState & {
 };
 
 const STORAGE_KEY = 'pypath.progress.v1';
-const emptyState: ProgressState = { foundations: [], projects: [], algorithms: [], customProblems: [] };
+const FOUNDATION_REVISION = 3;
+const foundationIds = new Set(foundationChapterCatalog.map((chapter) => chapter.id));
+const foundationExerciseIds = new Map(
+  foundationChapterCatalog.map((chapter) => [chapter.id, ['core', ...(foundationPractice[chapter.id] ?? []).map((exercise) => exercise.id)]])
+);
+const validFoundationExerciseIds = new Set(
+  [...foundationExerciseIds].flatMap(([chapterId, exerciseIds]) => exerciseIds.map((exerciseId) => foundationExerciseProgressId(chapterId, exerciseId)))
+);
+export const foundationExerciseTotal = validFoundationExerciseIds.size;
+const emptyState: ProgressState = {
+  foundationRevision: FOUNDATION_REVISION,
+  foundations: [],
+  foundationExercises: [],
+  projects: [],
+  algorithms: [],
+  customProblems: [],
+};
 
 const CourseProgressContext = createContext<CourseProgressContextValue | null>(null);
 
 function percentage(done: number, total: number) {
-  return total === 0 ? 0 : Math.round((done / total) * 100);
+  return total === 0 ? 0 : Math.min(100, Math.round((done / total) * 100));
 }
 
 function cleanState(candidate: Partial<ProgressState>): ProgressState {
+  const savedExercises = candidate.foundationRevision === FOUNDATION_REVISION && Array.isArray(candidate.foundationExercises)
+    ? candidate.foundationExercises.filter((item): item is string => typeof item === 'string' && validFoundationExerciseIds.has(item))
+    : [];
+  const foundationExercises = [...new Set(savedExercises)];
+  const foundations = foundationChapterCatalog
+    .filter((chapter) => (foundationExerciseIds.get(chapter.id) ?? []).every((exerciseId) => (
+      foundationExercises.includes(foundationExerciseProgressId(chapter.id, exerciseId))
+    )))
+    .map((chapter) => chapter.id);
   return {
-    foundations: Array.isArray(candidate.foundations) ? candidate.foundations.filter((item): item is string => typeof item === 'string') : [],
+    foundationRevision: FOUNDATION_REVISION,
+    foundations,
+    foundationExercises,
     projects: Array.isArray(candidate.projects) ? candidate.projects.filter((item): item is string => typeof item === 'string') : [],
     algorithms: Array.isArray(candidate.algorithms) ? candidate.algorithms.filter((item): item is string => typeof item === 'string') : [],
     customProblems: Array.isArray(candidate.customProblems)
@@ -79,7 +110,22 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
     setState((current) => current[key].includes(id) ? current : { ...current, [key]: [...current[key], id] });
   }, []);
 
-  const completeFoundation = useCallback((id: string) => addOnce('foundations', id), [addOnce]);
+  const completeFoundationExercise = useCallback((chapterId: string, exerciseId: string) => {
+    const progressId = foundationExerciseProgressId(chapterId, exerciseId);
+    if (!foundationIds.has(chapterId) || !validFoundationExerciseIds.has(progressId)) return;
+    setState((current) => {
+      const foundationExercises = current.foundationExercises.includes(progressId)
+        ? current.foundationExercises
+        : [...current.foundationExercises, progressId];
+      const chapterCompleted = (foundationExerciseIds.get(chapterId) ?? []).every((id) => (
+        foundationExercises.includes(foundationExerciseProgressId(chapterId, id))
+      ));
+      const foundations = chapterCompleted && !current.foundations.includes(chapterId)
+        ? [...current.foundations, chapterId]
+        : current.foundations;
+      return { ...current, foundationExercises, foundations };
+    });
+  }, []);
   const completeProject = useCallback((id: string) => addOnce('projects', id), [addOnce]);
 
   const toggleAlgorithm = useCallback((id: string) => {
@@ -107,12 +153,12 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
   }, []);
 
   const value = useMemo<CourseProgressContextValue>(() => {
-    const foundationPercent = percentage(state.foundations.length, foundationChapters.length);
+    const foundationPercent = percentage(state.foundationExercises.length, foundationExerciseTotal);
     const projectPercent = percentage(state.projects.length, projects.length);
     const algorithmTotal = builtinAlgorithmCount + state.customProblems.length;
     const algorithmPercent = percentage(state.algorithms.length, algorithmTotal);
-    const completed = state.foundations.length + state.projects.length + state.algorithms.length;
-    const total = foundationChapters.length + projects.length + algorithmTotal;
+    const completed = state.foundationExercises.length + state.projects.length + state.algorithms.length;
+    const total = foundationExerciseTotal + projects.length + algorithmTotal;
     return {
       ...state,
       hydrated,
@@ -120,13 +166,13 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
       projectPercent,
       algorithmPercent,
       totalPercent: percentage(completed, total),
-      completeFoundation,
+      completeFoundationExercise,
       completeProject,
       toggleAlgorithm,
       addCustomProblem,
       removeCustomProblem,
     };
-  }, [state, hydrated, completeFoundation, completeProject, toggleAlgorithm, addCustomProblem, removeCustomProblem]);
+  }, [state, hydrated, completeFoundationExercise, completeProject, toggleAlgorithm, addCustomProblem, removeCustomProblem]);
 
   return <CourseProgressContext.Provider value={value}>{children}</CourseProgressContext.Provider>;
 }
@@ -139,6 +185,10 @@ export function useCourseProgress() {
 
 export function algorithmProgressId(categoryId: string, problemId: number | string) {
   return `${categoryId}:${problemId}`;
+}
+
+export function foundationExerciseProgressId(chapterId: string, exerciseId: string) {
+  return `${chapterId}:${exerciseId}`;
 }
 
 export const algorithmCategoryCount = algorithmCategories.length;

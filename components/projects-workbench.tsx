@@ -106,7 +106,7 @@ export function ProjectsWorkbench() {
 
             <div>
               <SectionTitle icon={CheckCircle2} title="通过条件" />
-              <ul className="mb-7 space-y-2.5">{project.acceptance.map((item) => <li key={item} className="flex gap-2.5 text-xs leading-5 text-ink/6"><span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-mint-pale"><Check className="size-2.5 text-mint-dark" /></span>{item}</li>)}</ul>
+              <ul className="mb-7 space-y-2.5">{project.acceptance.map((item) => <li key={item} className="flex gap-2.5 text-xs leading-5 text-ink"><span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-mint-pale"><Check className="size-2.5 text-mint-dark" /></span>{item}</li>)}</ul>
 
               <SectionTitle icon={Play} title="验收命令" />
               <div className="overflow-hidden rounded-[16px] bg-ink text-white">

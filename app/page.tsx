@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { ArrowUpRight, BookOpenText, Braces, Check, Circle, Code2, FlaskConical, GitBranch, Sparkles, TerminalSquare } from 'lucide-react';
-import { useCourseProgress } from '@/components/course-progress';
-import { builtinAlgorithmCount, foundationChapters, projects } from '@/lib/course-data';
+import { foundationExerciseTotal, useCourseProgress } from '@/components/course-progress';
+import { builtinAlgorithmCount, projects } from '@/lib/course-data';
+import { foundationChapterCatalog } from '@/lib/foundation-catalog';
 
 const stages = [
   {
     id: '01', eyebrow: '先建立语言直觉', title: 'Python 基础语法',
-    description: '从变量到函数与常用标准库，边学边运行，提交通过才点亮节点。',
+    description: '从语法直觉一路学到并发、网络、数据库与 AI 接口，提交通过才点亮节点。',
     href: '/foundations', icon: Braces, tone: 'mint',
-    topics: ['表达式与变量', '容器与循环', '函数与模块', '异常与文件'],
+    topics: ['语法与数据结构', '函数与面向对象', '标准库与并发', '网络与生态应用'],
   },
   {
     id: '02', eyebrow: '把知识装进作品里', title: 'Python 实战项目',
@@ -28,9 +29,9 @@ const stages = [
 
 export default function Home() {
   const progress = useCourseProgress();
-  const nextChapter = foundationChapters.find((chapter) => !progress.foundations.includes(chapter.id));
+  const nextChapter = foundationChapterCatalog.find((chapter) => !progress.foundations.includes(chapter.id));
   const stageCounts = [
-    `${progress.foundations.length} / ${foundationChapters.length}`,
+    `${progress.foundationExercises.length} / ${foundationExerciseTotal} 题`,
     `${progress.projects.length} / ${projects.length}`,
     `${progress.algorithms.length} / ${builtinAlgorithmCount + progress.customProblems.length}`,
   ];

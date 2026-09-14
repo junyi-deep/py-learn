@@ -20,6 +20,19 @@ const categoryTone = {
   blue: 'bg-[#a7d8ff] text-ink', rose: 'bg-[#ffb7c4] text-ink',
 };
 
+function normalizeLeetCodeCnUrl(value: string) {
+  try {
+    const parsed = new URL(value.trim());
+    const hostname = parsed.hostname.toLowerCase();
+    const isHttp = parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    const isLeetCode = ['leetcode.com', 'www.leetcode.com', 'leetcode.cn', 'www.leetcode.cn'].includes(hostname);
+    if (!isHttp || !isLeetCode || !parsed.pathname.startsWith('/problems/')) return null;
+    return new URL(`${parsed.pathname}${parsed.search}${parsed.hash}`, 'https://leetcode.cn').toString();
+  } catch {
+    return null;
+  }
+}
+
 export function AlgorithmsWorkbench() {
   const [selectedId, setSelectedId] = useState(algorithmCategories[0].id);
   const [query, setQuery] = useState('');
@@ -46,15 +59,12 @@ export function AlgorithmsWorkbench() {
       setFormError('请填写题目名称。');
       return;
     }
-    try {
-      const parsed = new URL(form.url);
-      const hostname = parsed.hostname.toLowerCase();
-      if (!(hostname === 'leetcode.com' || hostname.endsWith('.leetcode.com') || hostname === 'leetcode.cn' || hostname.endsWith('.leetcode.cn'))) throw new Error('host');
-    } catch {
+    const normalizedUrl = normalizeLeetCodeCnUrl(form.url);
+    if (!normalizedUrl) {
       setFormError('请输入有效的 LeetCode 题目链接。');
       return;
     }
-    progress.addCustomProblem({ title: form.title.trim(), url: form.url.trim(), categoryId: form.categoryId, difficulty: form.difficulty });
+    progress.addCustomProblem({ title: form.title.trim(), url: normalizedUrl, categoryId: form.categoryId, difficulty: form.difficulty });
     setSelectedId(form.categoryId);
     setForm({ title: '', url: '', categoryId: form.categoryId, difficulty: '中等' });
     setDialogOpen(false);
@@ -114,7 +124,7 @@ export function AlgorithmsWorkbench() {
                   <div className="mb-2 flex items-center gap-2 text-[11px] font-bold text-violet"><Sparkles className="size-3.5" /> 先记住这个画面</div>
                   <p className="text-xs leading-6 text-white/65">{category.metaphor}</p>
                 </div>
-                <div className="mt-4 flex gap-3"><Lightbulb className="mt-0.5 size-4 shrink-0 text-amber" /><p className="text-xs leading-6 text-white/5">{category.principle}</p></div>
+                <div className="mt-4 flex gap-3"><Lightbulb className="mt-0.5 size-4 shrink-0 text-amber" /><p className="text-xs leading-6 text-white/55">{category.principle}</p></div>
               </div>
               <div className="border-t border-white/10 bg-[#111a2d] p-6 lg:border-l lg:border-t-0 sm:p-8">
                 <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.15em] text-mint"><Code2 className="size-3.5" /> Reusable skeleton</div>
@@ -137,11 +147,11 @@ export function AlgorithmsWorkbench() {
               {visibleProblems.map((problem) => {
                 const progressId = algorithmProgressId(category.id, problem.id);
                 const done = progress.algorithms.includes(progressId);
-                return <ProblemRow key={problem.id} number={String(problem.id)} title={problem.title} difficulty={problem.difficulty} url={`https://leetcode.com/problems/${problem.slug}/`} done={done} onToggle={() => progress.toggleAlgorithm(progressId)} />;
+                return <ProblemRow key={problem.id} number={String(problem.id)} title={problem.title} difficulty={problem.difficulty} url={`https://leetcode.cn/problems/${problem.slug}/`} done={done} onToggle={() => progress.toggleAlgorithm(progressId)} />;
               })}
               {visibleCustom.map((problem) => {
                 const done = progress.algorithms.includes(problem.id);
-                return <ProblemRow key={problem.id} number="自选" title={problem.title} difficulty={problem.difficulty} url={problem.url} done={done} onToggle={() => progress.toggleAlgorithm(problem.id)} onRemove={() => progress.removeCustomProblem(problem.id)} />;
+                return <ProblemRow key={problem.id} number="自选" title={problem.title} difficulty={problem.difficulty} url={normalizeLeetCodeCnUrl(problem.url) ?? 'https://leetcode.cn/problemset/'} done={done} onToggle={() => progress.toggleAlgorithm(problem.id)} onRemove={() => progress.removeCustomProblem(problem.id)} />;
               })}
               {visibleProblems.length === 0 && visibleCustom.length === 0 && <div className="p-10 text-center"><ListFilter className="mx-auto mb-3 size-6 text-ink/25" /><p className="text-sm font-bold text-ink/55">没有匹配的题目</p><p className="mt-1 text-xs text-ink/35">换一个关键词，或添加自己的 LeetCode 题目。</p></div>}
             </div>
@@ -185,7 +195,7 @@ function AddProblemDialog({ open, setOpen, form, setForm, error, onSubmit }: {
           <DialogHeader><DialogTitle className="font-display text-xl font-bold">添加一道 LeetCode 题</DialogTitle><DialogDescription>把你想补充的题放进相应算法分类，进度会保存在当前浏览器。</DialogDescription></DialogHeader>
           <div className="mt-5 grid gap-4">
             <label><span className="mb-1.5 block text-xs font-bold">题目名称</span><Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="例如：接雨水" className="h-10" /></label>
-            <label><span className="mb-1.5 block text-xs font-bold">LeetCode 链接</span><Input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder="https://leetcode.com/problems/..." className="h-10" /></label>
+            <label><span className="mb-1.5 block text-xs font-bold">LeetCode 链接</span><Input value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder="https://leetcode.cn/problems/..." className="h-10" /></label>
             <div className="grid grid-cols-2 gap-3">
               <label><span className="mb-1.5 block text-xs font-bold">算法分类</span><Select value={form.categoryId} onValueChange={(value) => setForm({ ...form, categoryId: value as string })}><SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger><SelectContent>{algorithmCategories.map((category) => <SelectItem key={category.id} value={category.id}>{category.title}</SelectItem>)}</SelectContent></Select></label>
               <label><span className="mb-1.5 block text-xs font-bold">难度</span><Select value={form.difficulty} onValueChange={(value) => setForm({ ...form, difficulty: value as Difficulty })}><SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger><SelectContent>{(['简单', '中等', '困难'] as Difficulty[]).map((difficulty) => <SelectItem key={difficulty} value={difficulty}>{difficulty}</SelectItem>)}</SelectContent></Select></label>

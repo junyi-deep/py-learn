@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://pypath-learning-atlas.blue-bell-4664.chatgpt.site'),
+  metadataBase: new URL('http://localhost:3000'),
   title: {
     default: 'PyPath · 从 Python 到算法',
     template: '%s',
