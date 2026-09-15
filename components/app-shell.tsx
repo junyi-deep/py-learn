@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Braces, Code2, Compass, GitBranch, Map, TerminalSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useCourseProgress } from '@/components/course-progress';
+import { readFoundationMode, saveFoundationMode } from '@/lib/foundation-mode';
 
 const navItems = [
   { href: '/', label: '学习星图', shortLabel: '星图', icon: Map },
@@ -20,11 +21,11 @@ function isActive(pathname: string, href: string) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { totalPercent, hydrated } = useCourseProgress();
-  const [practiceMode, setPracticeMode] = useState(false);
+  const [practiceMode, setPracticeMode] = useState(true);
   const onFoundations = pathname.startsWith('/foundations');
 
   useEffect(() => {
-    const syncMode = () => setPracticeMode(new URLSearchParams(window.location.search).get('mode') === 'practice');
+    const syncMode = () => setPracticeMode(readFoundationMode());
     syncMode();
     window.addEventListener('popstate', syncMode);
     window.addEventListener('pypath:location-change', syncMode);
@@ -36,8 +37,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   function switchFoundationMode(nextPracticeMode: boolean) {
     const url = new URL(window.location.href);
-    if (nextPracticeMode) url.searchParams.set('mode', 'practice');
-    else url.searchParams.delete('mode');
+    url.searchParams.set('mode', nextPracticeMode ? 'practice' : 'learn');
+    saveFoundationMode(nextPracticeMode);
     window.history.replaceState({}, '', url);
     setPracticeMode(nextPracticeMode);
     window.dispatchEvent(new Event('pypath:location-change'));

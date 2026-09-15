@@ -7,14 +7,16 @@ import { foundationExerciseProgressId, foundationExerciseTotal, useCourseProgres
 import { foundationChapters } from '@/lib/course-data';
 import type { FoundationGroup } from '@/lib/foundation-catalog';
 import { exercisesForChapter } from '@/lib/foundation-practice';
+import { readFoundationMode } from '@/lib/foundation-mode';
+import { RainbowQuestionRail } from '@/components/rainbow-question-rail';
 
 const chapterGroups: FoundationGroup[] = ['基础语法', '进阶语法', '标准库与应用'];
 
 export function FoundationsWorkbench() {
   const [selectedId, setSelectedId] = useState(foundationChapters[0].id);
   const [selectedExerciseId, setSelectedExerciseId] = useState('core');
-  const [practiceMode, setPracticeMode] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [practiceMode, setPracticeMode] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [draftCode, setDraftCode] = useState<Record<string, string>>({});
   const { foundations, foundationExercises, foundationPercent, hydrated } = useCourseProgress();
 
@@ -25,11 +27,9 @@ export function FoundationsWorkbench() {
     if (requested) {
       setSelectedId(requested.id);
       const requestedExercise = params.get('exercise');
-      if (requestedExercise && exercisesForChapter(requested).some((exercise) => exercise.id === requestedExercise)) {
-        setSelectedExerciseId(requestedExercise);
-      }
+      setSelectedExerciseId(requestedExercise && exercisesForChapter(requested).some((exercise) => exercise.id === requestedExercise) ? requestedExercise : 'core');
     }
-      setPracticeMode(params.get('mode') === 'practice');
+      setPracticeMode(readFoundationMode());
     };
     syncLocation();
     window.addEventListener('popstate', syncLocation);
@@ -49,8 +49,7 @@ export function FoundationsWorkbench() {
     url.searchParams.set('chapter', chapterId);
     if (exerciseId === 'core') url.searchParams.delete('exercise');
     else url.searchParams.set('exercise', exerciseId);
-    if (isPracticeMode) url.searchParams.set('mode', 'practice');
-    else url.searchParams.delete('mode');
+    url.searchParams.set('mode', isPracticeMode ? 'practice' : 'learn');
     window.history.replaceState({}, '', url);
     window.dispatchEvent(new Event('pypath:location-change'));
   }
@@ -90,15 +89,16 @@ export function FoundationsWorkbench() {
 
   if (practiceMode) {
     return (
-      <main className="mx-auto h-[calc(100dvh-3rem)] max-w-[1600px] overflow-hidden p-3 sm:p-4">
-        <div className={`grid h-full min-h-0 gap-3 transition-[grid-template-columns] md:grid-rows-1 ${sidebarCollapsed ? 'grid-rows-[48px_minmax(0,1fr)] md:grid-cols-[48px_minmax(0,1fr)]' : 'grid-rows-[minmax(180px,32vh)_minmax(0,1fr)] md:grid-cols-[250px_minmax(0,1fr)]'}`}>
+      <main className="mx-auto h-[calc(100dvh-3rem-1px)] max-w-[1600px] overflow-hidden p-3 sm:p-4">
+        <div className={`grid h-full min-h-0 gap-3 transition-[grid-template-columns] md:grid-rows-1 ${sidebarCollapsed ? 'grid-cols-[56px_minmax(0,1fr)] grid-rows-1' : 'grid-rows-[minmax(180px,32vh)_minmax(0,1fr)] md:grid-cols-[250px_minmax(0,1fr)]'}`}>
           <aside className="min-h-0 overflow-hidden rounded-[18px] border border-ink/9 bg-white/80" aria-label="做题模式题目列表">
-            <div className={`flex items-center border-b border-ink/8 ${sidebarCollapsed ? 'h-full justify-center md:h-12' : 'h-12 justify-between px-3'}`}>
+            <div className={`flex h-12 items-center border-b border-ink/8 ${sidebarCollapsed ? 'justify-center' : 'justify-between px-3'}`}>
               {!sidebarCollapsed && <span className="font-mono text-[11px] font-bold text-ink/62">{foundationExercises.length}/{foundationExerciseTotal}</span>}
               <button type="button" onClick={() => setSidebarCollapsed((current) => !current)} aria-label={sidebarCollapsed ? '展开题目目录' : '收起题目目录'} className="grid size-8 place-items-center rounded-lg text-ink/48 transition hover:bg-ink/5 hover:text-ink">
                 {sidebarCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
               </button>
             </div>
+            {sidebarCollapsed && <RainbowQuestionRail chapterId={chapter.id} exerciseId={selectedExerciseId} completed={foundationExercises} onSelect={selectPracticeQuestion} />}
             {!sidebarCollapsed && <div className="h-[calc(100%-3rem)] overflow-y-auto p-2">
               <div className="space-y-2">
               {chapterGroups.map((group) => (
