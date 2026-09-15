@@ -17,6 +17,7 @@ type ProgressState = {
   foundationRevision: number;
   foundations: string[];
   foundationExercises: string[];
+  submittedCode: Record<string, string>;
   projects: string[];
   algorithms: string[];
   customProblems: CustomProblem[];
@@ -29,6 +30,7 @@ type CourseProgressContextValue = ProgressState & {
   algorithmPercent: number;
   totalPercent: number;
   completeFoundationExercise: (chapterId: string, exerciseId: string) => void;
+  recordFoundationSubmission: (chapterId: string, exerciseId: string, code: string) => void;
   completeProject: (id: string) => void;
   toggleAlgorithm: (id: string) => void;
   addCustomProblem: (problem: Omit<CustomProblem, 'id'>) => void;
@@ -49,6 +51,7 @@ const emptyState: ProgressState = {
   foundationRevision: FOUNDATION_REVISION,
   foundations: [],
   foundationExercises: [],
+  submittedCode: {},
   projects: [],
   algorithms: [],
   customProblems: [],
@@ -65,6 +68,9 @@ function cleanState(candidate: Partial<ProgressState>): ProgressState {
     ? candidate.foundationExercises.filter((item): item is string => typeof item === 'string' && validFoundationExerciseIds.has(item))
     : [];
   const foundationExercises = [...new Set(savedExercises)];
+  const submittedCode = candidate.submittedCode && typeof candidate.submittedCode === 'object' && !Array.isArray(candidate.submittedCode)
+    ? Object.fromEntries(Object.entries(candidate.submittedCode).filter(([id, code]) => validFoundationExerciseIds.has(id) && typeof code === 'string'))
+    : {};
   const foundations = foundationChapterCatalog
     .filter((chapter) => (foundationExerciseIds.get(chapter.id) ?? []).every((exerciseId) => (
       foundationExercises.includes(foundationExerciseProgressId(chapter.id, exerciseId))
@@ -74,6 +80,7 @@ function cleanState(candidate: Partial<ProgressState>): ProgressState {
     foundationRevision: FOUNDATION_REVISION,
     foundations,
     foundationExercises,
+    submittedCode,
     projects: Array.isArray(candidate.projects) ? candidate.projects.filter((item): item is string => typeof item === 'string') : [],
     algorithms: Array.isArray(candidate.algorithms) ? candidate.algorithms.filter((item): item is string => typeof item === 'string') : [],
     customProblems: Array.isArray(candidate.customProblems)
@@ -126,6 +133,14 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
       return { ...current, foundationExercises, foundations };
     });
   }, []);
+  const recordFoundationSubmission = useCallback((chapterId: string, exerciseId: string, code: string) => {
+    const progressId = foundationExerciseProgressId(chapterId, exerciseId);
+    if (!validFoundationExerciseIds.has(progressId)) return;
+    setState((current) => ({
+      ...current,
+      submittedCode: { ...current.submittedCode, [progressId]: code },
+    }));
+  }, []);
   const completeProject = useCallback((id: string) => addOnce('projects', id), [addOnce]);
 
   const toggleAlgorithm = useCallback((id: string) => {
@@ -167,12 +182,13 @@ export function CourseProgressProvider({ children }: { children: React.ReactNode
       algorithmPercent,
       totalPercent: percentage(completed, total),
       completeFoundationExercise,
+      recordFoundationSubmission,
       completeProject,
       toggleAlgorithm,
       addCustomProblem,
       removeCustomProblem,
     };
-  }, [state, hydrated, completeFoundationExercise, completeProject, toggleAlgorithm, addCustomProblem, removeCustomProblem]);
+  }, [state, hydrated, completeFoundationExercise, recordFoundationSubmission, completeProject, toggleAlgorithm, addCustomProblem, removeCustomProblem]);
 
   return <CourseProgressContext.Provider value={value}>{children}</CourseProgressContext.Provider>;
 }

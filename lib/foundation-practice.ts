@@ -1,6 +1,10 @@
-import type { FoundationExercise } from './course-data';
+import type { FoundationChapter, FoundationExercise } from './course-data';
 
 export type SupplementalFoundationExercise = FoundationExercise & { id: string };
+
+export function exercisesForChapter(chapter: FoundationChapter): SupplementalFoundationExercise[] {
+  return [{ id: 'core', ...chapter.exercise }, ...(foundationPractice[chapter.id] ?? [])];
+}
 
 export const foundationPractice: Record<string, SupplementalFoundationExercise[]> = {
   'first-program': [{

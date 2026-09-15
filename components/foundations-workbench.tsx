@@ -1,32 +1,132 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BookOpenText, Check, ChevronRight, Circle, Clock3, Code2, ExternalLink, Lightbulb, ListChecks, Route } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpenText, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, Lightbulb, ListChecks, PanelLeft, Route } from 'lucide-react';
 import { PythonExercise } from '@/components/python-exercise';
-import { foundationExerciseTotal, useCourseProgress } from '@/components/course-progress';
+import { foundationExerciseProgressId, foundationExerciseTotal, useCourseProgress } from '@/components/course-progress';
 import { foundationChapters } from '@/lib/course-data';
 import type { FoundationGroup } from '@/lib/foundation-catalog';
+import { exercisesForChapter } from '@/lib/foundation-practice';
 
 const chapterGroups: FoundationGroup[] = ['基础语法', '进阶语法', '标准库与应用'];
 
 export function FoundationsWorkbench() {
   const [selectedId, setSelectedId] = useState(foundationChapters[0].id);
-  const { foundations, foundationExercises, foundationPercent } = useCourseProgress();
+  const [selectedExerciseId, setSelectedExerciseId] = useState('core');
+  const [practiceMode, setPracticeMode] = useState(false);
+  const [draftCode, setDraftCode] = useState<Record<string, string>>({});
+  const { foundations, foundationExercises, foundationPercent, hydrated } = useCourseProgress();
 
   useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get('chapter');
-    if (requested && foundationChapters.some((chapter) => chapter.id === requested)) setSelectedId(requested);
+    const params = new URLSearchParams(window.location.search);
+    const requested = foundationChapters.find((chapter) => chapter.id === params.get('chapter'));
+    if (requested) {
+      setSelectedId(requested.id);
+      const requestedExercise = params.get('exercise');
+      if (requestedExercise && exercisesForChapter(requested).some((exercise) => exercise.id === requestedExercise)) {
+        setSelectedExerciseId(requestedExercise);
+      }
+    }
+    if (params.get('mode') === 'practice') setPracticeMode(true);
   }, []);
 
   const chapter = useMemo(() => foundationChapters.find((item) => item.id === selectedId) ?? foundationChapters[0], [selectedId]);
   const chapterIndex = foundationChapters.findIndex((item) => item.id === chapter.id);
+  const activeProgressId = foundationExerciseProgressId(chapter.id, selectedExerciseId);
+
+  function updateLocation(chapterId: string, exerciseId: string, isPracticeMode: boolean) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('chapter', chapterId);
+    if (exerciseId === 'core') url.searchParams.delete('exercise');
+    else url.searchParams.set('exercise', exerciseId);
+    if (isPracticeMode) url.searchParams.set('mode', 'practice');
+    else url.searchParams.delete('mode');
+    window.history.replaceState({}, '', url);
+  }
 
   function selectChapter(id: string) {
     setSelectedId(id);
-    const url = new URL(window.location.href);
-    url.searchParams.set('chapter', id);
-    window.history.replaceState({}, '', url);
+    setSelectedExerciseId('core');
+    updateLocation(id, 'core', practiceMode);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function selectExercise(id: string) {
+    setSelectedExerciseId(id);
+    updateLocation(chapter.id, id, practiceMode);
+  }
+
+  function selectPracticeQuestion(chapterId: string, exerciseId: string) {
+    setSelectedId(chapterId);
+    setSelectedExerciseId(exerciseId);
+    updateLocation(chapterId, exerciseId, true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function togglePracticeMode(enabled: boolean) {
+    setPracticeMode(enabled);
+    updateLocation(chapter.id, selectedExerciseId, enabled);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const exercisePane = hydrated ? (
+    <PythonExercise
+      key={activeProgressId}
+      chapter={chapter}
+      selectedExerciseId={selectedExerciseId}
+      onSelectExercise={selectExercise}
+      practiceMode={practiceMode}
+      draftCode={draftCode[activeProgressId]}
+      onDraftChange={(code) => setDraftCode((current) => ({ ...current, [activeProgressId]: code }))}
+    />
+  ) : (
+    <div className="rounded-2xl border border-ink/10 bg-white p-8 text-sm text-ink/50">正在恢复学习进度与上次提交的代码…</div>
+  );
+
+  if (practiceMode) {
+    return (
+      <main className="mx-auto max-w-[1600px] px-4 pb-20 pt-6 sm:px-6 lg:px-8">
+        <header className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-[22px] border border-ink/9 bg-white/80 p-4 shadow-[0_12px_36px_rgba(23,35,60,.05)] sm:px-6">
+          <div>
+            <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.15em] text-mint-dark"><PanelLeft className="size-4" /> 专注做题模式</p>
+            <h1 className="mt-1 font-display text-xl font-bold text-ink">Python 基础练习 <span className="font-mono text-sm font-semibold text-ink/40">{foundationExercises.length}/{foundationExerciseTotal}</span></h1>
+          </div>
+          <button type="button" onClick={() => togglePracticeMode(false)} className="flex items-center gap-2 rounded-xl border border-ink/10 bg-cream px-4 py-2.5 text-xs font-bold text-ink transition hover:border-mint-dark/35 hover:bg-mint-pale"><ArrowLeft className="size-4" /> 退出做题模式</button>
+        </header>
+        <div className="grid items-start gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
+          <aside className="rounded-[22px] border border-ink/9 bg-white/80 p-3 xl:sticky xl:top-5 xl:max-h-[calc(100vh-2.5rem)] xl:overflow-y-auto" aria-label="做题模式题目列表">
+            <div className="px-3 pb-3 pt-2"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-ink/38">Problem list</p><p className="mt-1 text-sm font-bold text-ink">按章节选择题目</p></div>
+            <div className="space-y-4">
+              {chapterGroups.map((group) => (
+                <section key={group} aria-label={group}>
+                  <h2 className="mb-2 px-3 text-[10px] font-bold text-mint-dark">{group}</h2>
+                  <div className="space-y-3">
+                    {foundationChapters.filter((item) => item.group === group).map((item) => (
+                      <div key={item.id}>
+                        <p className="mb-1 px-3 font-mono text-[10px] font-semibold text-ink/40">{item.number} · {item.shortTitle}</p>
+                        <div className="grid gap-1 sm:grid-cols-2 xl:grid-cols-1">
+                          {exercisesForChapter(item).map((exercise, index) => {
+                            const active = item.id === chapter.id && exercise.id === selectedExerciseId;
+                            const complete = foundationExercises.includes(foundationExerciseProgressId(item.id, exercise.id));
+                            return (
+                              <button key={exercise.id} type="button" aria-current={active ? 'true' : undefined} onClick={() => selectPracticeQuestion(item.id, exercise.id)} className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs transition ${active ? 'bg-ink font-bold text-white shadow-sm' : 'text-ink/68 hover:bg-ink/5 hover:text-ink'}`}>
+                                {complete ? <CheckCircle2 className={`size-4 shrink-0 ${active ? 'text-mint' : 'text-mint-dark'}`} /> : <span className={`grid size-4 shrink-0 place-items-center rounded-full font-mono text-[9px] ${active ? 'bg-white/10 text-white' : 'bg-cream text-ink/45'}`}>{index + 1}</span>}
+                                <span className="min-w-0 flex-1 truncate">{exercise.title}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </aside>
+          <div className="min-w-0">{exercisePane}</div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -39,6 +139,7 @@ export function FoundationsWorkbench() {
             <p className="mt-4 max-w-2xl text-sm leading-6 text-ink/55">第一阶段在内部划分为基础语法、进阶语法和标准库与应用，共 {foundationChapters.length} 章、{foundationExerciseTotal} 道可运行练习。每章先建立心智模型；本章练习全部通过，学习星图上的节点才会点亮。</p>
             <a href="https://www.runoob.com/python3/python3-tutorial.html" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-mint-dark transition hover:text-ink">知识范围参考菜鸟教程目录，已排除环境配置并重新编排 <ExternalLink className="size-3" /></a>
             <p className="mt-2 max-w-3xl text-[11px] leading-5 text-ink/42">Python 3 简介融入阶段导读，目录中的实例拆入各章示例，测验改写为可运行评测；参考资源入口保留在这里。讲解与题目均为本项目重新组织的原创内容。</p>
+            <button type="button" onClick={() => togglePracticeMode(true)} className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition hover:bg-ink/85"><PanelLeft className="size-4" /> 进入做题模式 <ArrowRight className="size-3.5" /></button>
           </div>
           <div className="rounded-[20px] bg-mint-pale p-4">
             <div className="mb-3 flex items-center justify-between"><span className="text-xs font-bold text-mint-dark">阶段进度</span><span className="font-mono text-sm font-bold text-mint-dark">{foundations.length}/{foundationChapters.length}</span></div>
@@ -105,7 +206,7 @@ export function FoundationsWorkbench() {
             </div>
           </section>
 
-          <PythonExercise key={chapter.id} chapter={chapter} />
+          {exercisePane}
 
           <div className="mt-5 flex items-center justify-between rounded-[20px] border border-ink/8 bg-white/60 p-3">
             <button disabled={chapterIndex === 0} onClick={() => chapterIndex > 0 && selectChapter(foundationChapters[chapterIndex - 1].id)} className="rounded-xl px-3 py-2 text-xs font-semibold text-ink/48 transition hover:bg-white hover:text-ink disabled:opacity-30">上一章</button>
