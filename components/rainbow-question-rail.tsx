@@ -16,7 +16,7 @@ export function RainbowQuestionRail({ chapterId, exerciseId, completed, onSelect
   const [preview, setPreview] = useState<{ index: number; left: number; top: number } | null>(null);
   function show(index: number, element: HTMLButtonElement) {
     const rect = element.getBoundingClientRect();
-    setPreview({ index, left: rect.right + 8, top: Math.max(8, Math.min(rect.top, window.innerHeight - 56)) });
+    setPreview({ index, left: rect.right - 1, top: Math.max(8, Math.min(rect.top, window.innerHeight - 34)) });
   }
   return (
     <>
@@ -25,7 +25,7 @@ export function RainbowQuestionRail({ chapterId, exerciseId, completed, onSelect
           const active = question.chapterId === chapterId && question.exerciseId === exerciseId;
           const passed = completed.includes(`${question.chapterId}:${question.exerciseId}`);
           return <button type="button" key={`${question.chapterId}:${question.exerciseId}`}
-            className="rainbow-question" style={{ '--question-hue': index * 300 / questions.length, '--shine-delay': `${-index * .12}s` } as CSSProperties}
+            className="rainbow-question"
             aria-label={`第 ${index + 1} 题：${question.title}${passed ? '，已通过' : ''}`}
             aria-current={active ? 'true' : undefined}
             onMouseEnter={(event) => show(index, event.currentTarget)} onMouseLeave={() => setPreview(null)}
@@ -40,8 +40,7 @@ export function RainbowQuestionRail({ chapterId, exerciseId, completed, onSelect
         left: preview.left, top: preview.top, maxWidth: `calc(100vw - ${preview.left + 12}px)`,
         '--question-hue': preview.index * 300 / questions.length,
       } as CSSProperties}>
-        <span className="font-mono text-lg font-black">{String(preview.index + 1).padStart(2, '0')}</span>
-        <span>{questions[preview.index].title}</span>
+        <span className="rainbow-preview-title">{questions[preview.index].title}</span>
       </div>, document.body)}
     </>
   );
