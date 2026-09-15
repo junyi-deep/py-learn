@@ -182,7 +182,7 @@ export function PythonExercise({ chapter, selectedExerciseId, onSelectExercise, 
   }
 
   const editor = (
-    <div className="min-w-0 border-white/10 lg:border-r">
+    <div className={`min-h-0 min-w-0 border-white/10 lg:border-r ${practiceMode ? 'flex h-full flex-col' : ''}`}>
       <div className="flex items-center justify-between border-b border-white/8 px-4 py-2.5">
         <span className="font-mono text-[10px] font-semibold text-white/45">solution.py {hasSubmission && <span className="ml-2 text-mint">· 已保存提交代码</span>}</span>
         <Button variant="ghost" size="sm" className="text-white/55 hover:bg-white/8 hover:text-white" onClick={() => updateCode(exercise.starterCode)}><RotateCcw /> 重置</Button>
@@ -192,27 +192,27 @@ export function PythonExercise({ chapter, selectedExerciseId, onSelectExercise, 
         onChange={(event) => updateCode(event.target.value)}
         spellCheck={false}
         aria-label="Python 代码编辑器"
-        className={`w-full resize-y bg-[#111b30] p-5 font-mono text-[13px] leading-6 text-[#e8edf7] outline-none selection:bg-mint/30 ${practiceMode ? 'min-h-[430px]' : 'min-h-[360px]'}`}
+        className={`w-full bg-[#111b30] p-5 font-mono text-[13px] leading-6 text-[#e8edf7] outline-none selection:bg-mint/30 ${practiceMode ? 'min-h-0 flex-1 resize-none' : 'min-h-[360px] resize-y'}`}
       />
     </div>
   );
 
   const resultPanel = (
-    <div className={`flex flex-col bg-[#101827] ${practiceMode ? 'min-h-[230px]' : 'min-h-[360px]'}`}>
+    <div className={`flex min-h-0 flex-col bg-[#101827] ${practiceMode ? '' : 'min-h-[360px]'}`}>
       {exercise.mode === 'stdout' && (
         <label className="border-b border-white/8 p-4">
           <span className="mb-2 block font-mono text-[10px] font-semibold text-white/45">标准输入（仅用于运行）</span>
           <textarea value={input} onChange={(event) => setInput(event.target.value)} spellCheck={false} className="min-h-20 w-full resize-y rounded-xl border border-white/10 bg-white/5 p-3 font-mono text-xs leading-5 text-white/80 outline-none focus:border-mint/50" />
         </label>
       )}
-      <div className="flex min-h-48 flex-1 flex-col p-4">
+      <div className={`flex min-h-0 flex-1 flex-col p-4 ${practiceMode ? '' : 'min-h-48'}`}>
         <span className="mb-2 flex items-center justify-between font-mono text-[10px] font-semibold text-white/45">
           {action === 'submit' ? '评测结果' : '临时运行结果'}
           {status === 'loading' && <LoaderCircle className="size-3.5 animate-spin text-mint" />}
           {status === 'success' && <CheckCircle2 className="size-3.5 text-mint" />}
           {status === 'error' && <TriangleAlert className="size-3.5 text-amber" />}
         </span>
-        <pre aria-live="polite" className={`min-h-32 flex-1 whitespace-pre-wrap break-words rounded-xl border p-3 font-mono text-[11px] leading-5 ${status === 'success' ? 'border-mint/25 bg-mint/8 text-mint' : status === 'error' ? 'border-amber/25 bg-amber/8 text-amber' : 'border-white/8 bg-black/12 text-white/62'}`}>{output}</pre>
+        <pre aria-live="polite" className={`min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl border p-3 font-mono text-[11px] leading-5 ${status === 'success' ? 'border-mint/25 bg-mint/8 text-mint' : status === 'error' ? 'border-amber/25 bg-amber/8 text-amber' : 'border-white/8 bg-black/12 text-white/62'}`}>{output}</pre>
       </div>
     </div>
   );
@@ -233,8 +233,8 @@ export function PythonExercise({ chapter, selectedExerciseId, onSelectExercise, 
 
   if (practiceMode) {
     return (
-      <section className="grid min-w-0 overflow-hidden rounded-[24px] border border-ink/10 bg-white shadow-[0_24px_70px_rgba(23,35,60,.12)] lg:grid-cols-[minmax(280px,.85fr)_minmax(0,1.15fr)]" aria-labelledby="exercise-title">
-        <div className="min-w-0 border-b border-ink/10 p-6 lg:border-b-0 lg:border-r lg:p-8">
+      <section className="grid h-full min-h-0 min-w-0 overflow-hidden rounded-[18px] border border-ink/10 bg-white shadow-[0_18px_54px_rgba(23,35,60,.1)] lg:grid-cols-[minmax(280px,.78fr)_minmax(0,1.22fr)]" aria-labelledby="exercise-title">
+        <div className="min-h-0 min-w-0 overflow-y-auto border-b border-ink/10 p-5 lg:border-b-0 lg:border-r lg:p-6">
           <div className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-mint-dark"><BookOpenText className="size-4" /> Chapter {chapter.number} · 题目 {exercises.findIndex((item) => item.id === exercise.id) + 1}</div>
           <h2 id="exercise-title" className="font-display text-2xl font-bold tracking-[-.035em] text-ink">{exercise.title}</h2>
           <p className="mt-3 text-sm leading-7 text-ink/70">{exercise.brief}</p>
@@ -262,8 +262,8 @@ export function PythonExercise({ chapter, selectedExerciseId, onSelectExercise, 
             <ol className="mt-3 list-decimal space-y-2 pl-4 leading-5">{exercise.hints.map((hint) => <li key={hint}>{hint}</li>)}</ol>
           </details>
         </div>
-        <div className="min-w-0 bg-ink">
-          <div className="border-b border-white/10 px-5 py-4"><p className="text-xs font-bold text-white">Python 编辑器</p><p className="mt-1 text-[11px] text-white/45">上次提交的代码会在再次进入时恢复。</p></div>
+        <div className="grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(180px,1fr)_minmax(130px,.36fr)_auto] bg-ink">
+          <div className="border-b border-white/10 px-5 py-3"><p className="text-xs font-bold text-white">Python 编辑器</p></div>
           {editor}
           {resultPanel}
           {actions}

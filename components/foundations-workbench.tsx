@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpenText, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, Lightbulb, ListChecks, PanelLeft, Route } from 'lucide-react';
+import { ArrowRight, BookOpenText, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Clock3, Code2, ExternalLink, Lightbulb, ListChecks, Route } from 'lucide-react';
 import { PythonExercise } from '@/components/python-exercise';
 import { foundationExerciseProgressId, foundationExerciseTotal, useCourseProgress } from '@/components/course-progress';
 import { foundationChapters } from '@/lib/course-data';
@@ -14,10 +14,12 @@ export function FoundationsWorkbench() {
   const [selectedId, setSelectedId] = useState(foundationChapters[0].id);
   const [selectedExerciseId, setSelectedExerciseId] = useState('core');
   const [practiceMode, setPracticeMode] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [draftCode, setDraftCode] = useState<Record<string, string>>({});
   const { foundations, foundationExercises, foundationPercent, hydrated } = useCourseProgress();
 
   useEffect(() => {
+    const syncLocation = () => {
     const params = new URLSearchParams(window.location.search);
     const requested = foundationChapters.find((chapter) => chapter.id === params.get('chapter'));
     if (requested) {
@@ -27,7 +29,15 @@ export function FoundationsWorkbench() {
         setSelectedExerciseId(requestedExercise);
       }
     }
-    if (params.get('mode') === 'practice') setPracticeMode(true);
+      setPracticeMode(params.get('mode') === 'practice');
+    };
+    syncLocation();
+    window.addEventListener('popstate', syncLocation);
+    window.addEventListener('pypath:location-change', syncLocation);
+    return () => {
+      window.removeEventListener('popstate', syncLocation);
+      window.removeEventListener('pypath:location-change', syncLocation);
+    };
   }, []);
 
   const chapter = useMemo(() => foundationChapters.find((item) => item.id === selectedId) ?? foundationChapters[0], [selectedId]);
@@ -42,6 +52,7 @@ export function FoundationsWorkbench() {
     if (isPracticeMode) url.searchParams.set('mode', 'practice');
     else url.searchParams.delete('mode');
     window.history.replaceState({}, '', url);
+    window.dispatchEvent(new Event('pypath:location-change'));
   }
 
   function selectChapter(id: string) {
@@ -63,12 +74,6 @@ export function FoundationsWorkbench() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function togglePracticeMode(enabled: boolean) {
-    setPracticeMode(enabled);
-    updateLocation(chapter.id, selectedExerciseId, enabled);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   const exercisePane = hydrated ? (
     <PythonExercise
       key={activeProgressId}
@@ -85,22 +90,23 @@ export function FoundationsWorkbench() {
 
   if (practiceMode) {
     return (
-      <main className="mx-auto max-w-[1600px] px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-        <header className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-[22px] border border-ink/9 bg-white/80 p-4 shadow-[0_12px_36px_rgba(23,35,60,.05)] sm:px-6">
-          <div>
-            <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.15em] text-mint-dark"><PanelLeft className="size-4" /> 专注做题模式</p>
-            <h1 className="mt-1 font-display text-xl font-bold text-ink">Python 基础练习 <span className="font-mono text-sm font-semibold text-ink/40">{foundationExercises.length}/{foundationExerciseTotal}</span></h1>
-          </div>
-          <button type="button" onClick={() => togglePracticeMode(false)} className="flex items-center gap-2 rounded-xl border border-ink/10 bg-cream px-4 py-2.5 text-xs font-bold text-ink transition hover:border-mint-dark/35 hover:bg-mint-pale"><ArrowLeft className="size-4" /> 退出做题模式</button>
-        </header>
-        <div className="grid items-start gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="rounded-[22px] border border-ink/9 bg-white/80 p-3 xl:sticky xl:top-5 xl:max-h-[calc(100vh-2.5rem)] xl:overflow-y-auto" aria-label="做题模式题目列表">
-            <div className="px-3 pb-3 pt-2"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-ink/38">Problem list</p><p className="mt-1 text-sm font-bold text-ink">按章节选择题目</p></div>
-            <div className="space-y-4">
+      <main className="mx-auto h-[calc(100dvh-3rem)] max-w-[1600px] overflow-hidden p-3 sm:p-4">
+        <div className={`grid h-full min-h-0 gap-3 transition-[grid-template-columns] md:grid-rows-1 ${sidebarCollapsed ? 'grid-rows-[48px_minmax(0,1fr)] md:grid-cols-[48px_minmax(0,1fr)]' : 'grid-rows-[minmax(180px,32vh)_minmax(0,1fr)] md:grid-cols-[250px_minmax(0,1fr)]'}`}>
+          <aside className="min-h-0 overflow-hidden rounded-[18px] border border-ink/9 bg-white/80" aria-label="做题模式题目列表">
+            <div className={`flex items-center border-b border-ink/8 ${sidebarCollapsed ? 'h-full justify-center md:h-12' : 'h-12 justify-between px-3'}`}>
+              {!sidebarCollapsed && <span className="font-mono text-[11px] font-bold text-ink/62">{foundationExercises.length}/{foundationExerciseTotal}</span>}
+              <button type="button" onClick={() => setSidebarCollapsed((current) => !current)} aria-label={sidebarCollapsed ? '展开题目目录' : '收起题目目录'} className="grid size-8 place-items-center rounded-lg text-ink/48 transition hover:bg-ink/5 hover:text-ink">
+                {sidebarCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+              </button>
+            </div>
+            {!sidebarCollapsed && <div className="h-[calc(100%-3rem)] overflow-y-auto p-2">
+              <div className="space-y-2">
               {chapterGroups.map((group) => (
-                <section key={group} aria-label={group}>
-                  <h2 className="mb-2 px-3 text-[10px] font-bold text-mint-dark">{group}</h2>
-                  <div className="space-y-3">
+                <details key={group} open className="group" aria-label={group}>
+                  <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-2.5 py-2 text-[10px] font-bold text-mint-dark hover:bg-mint-pale/60">
+                    {group}<ChevronDown className="size-3.5 transition group-open:rotate-180" />
+                  </summary>
+                  <div className="mt-1 space-y-2">
                     {foundationChapters.filter((item) => item.group === group).map((item) => (
                       <div key={item.id}>
                         <p className="mb-1 px-3 font-mono text-[10px] font-semibold text-ink/40">{item.number} · {item.shortTitle}</p>
@@ -119,11 +125,13 @@ export function FoundationsWorkbench() {
                       </div>
                     ))}
                   </div>
-                </section>
+                </details>
               ))}
+              </div>
             </div>
+            }
           </aside>
-          <div className="min-w-0">{exercisePane}</div>
+          <div className="min-h-0 min-w-0">{exercisePane}</div>
         </div>
       </main>
     );
@@ -139,7 +147,6 @@ export function FoundationsWorkbench() {
             <p className="mt-4 max-w-2xl text-sm leading-6 text-ink/55">第一阶段在内部划分为基础语法、进阶语法和标准库与应用，共 {foundationChapters.length} 章、{foundationExerciseTotal} 道可运行练习。每章先建立心智模型；本章练习全部通过，学习星图上的节点才会点亮。</p>
             <a href="https://www.runoob.com/python3/python3-tutorial.html" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-mint-dark transition hover:text-ink">知识范围参考菜鸟教程目录，已排除环境配置并重新编排 <ExternalLink className="size-3" /></a>
             <p className="mt-2 max-w-3xl text-[11px] leading-5 text-ink/42">Python 3 简介融入阶段导读，目录中的实例拆入各章示例，测验改写为可运行评测；参考资源入口保留在这里。讲解与题目均为本项目重新组织的原创内容。</p>
-            <button type="button" onClick={() => togglePracticeMode(true)} className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition hover:bg-ink/85"><PanelLeft className="size-4" /> 进入做题模式 <ArrowRight className="size-3.5" /></button>
           </div>
           <div className="rounded-[20px] bg-mint-pale p-4">
             <div className="mb-3 flex items-center justify-between"><span className="text-xs font-bold text-mint-dark">阶段进度</span><span className="font-mono text-sm font-bold text-mint-dark">{foundations.length}/{foundationChapters.length}</span></div>
