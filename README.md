@@ -50,3 +50,42 @@ uv build --out-dir outputs/python --clear  # 构建 Python wheel 与源码包
 ```
 
 `uv` 负责 Python 环境、锁文件、CLI 与 Python 包构建；网页编译仍由项目内的 Vinext/Node 工具链完成，但统一通过 `uv run pylearn …` 进入。
+
+## 独立二进制发行包
+
+在 GitHub Releases 下载对应平台的完整压缩包：
+
+- Apple Silicon Mac：`PyPath-macos-arm64.tar.gz`，解压后运行 `./PyPath/PyPath`。
+- Windows x64：`PyPath-win-x64.zip`，全部解压后双击 `PyPath.exe`。
+
+启动程序会打开浏览器，地址为 `http://127.0.0.1:3000/foundations`；按 `Ctrl+C` 关闭服务。可传入 `--port 3001` 指定端口，或 `--no-browser` 禁止自动打开浏览器。端口占用时会明确报错。
+
+发行包包含原生启动程序、Python 启动运行时、Node 运行时和生产网页，无需预装 Python、Node、npm 或 uv 即可启动网页。请保留解压后的整个目录，不能仅复制可执行文件。浏览器内 Python 引擎首次加载需要网络；这不是完全离线包。`course/` 附带已提交的实战模板和 CLI，进行本地 Python 实战仍需安装 uv，进入 `course/` 后使用 `uv run pylearn check …`。
+
+模式、提交代码和网页进度保存在浏览器里；需使用同一个浏览器、地址及端口才能恢复。发行包默认使用 `127.0.0.1`，与源码开发时的 `localhost` 数据独立。当前发行包未做 Apple 公证或 Windows 发布者签名。
+
+### 本机构建
+
+构建机需要 Git、uv、Node.js 22.17+ 和对应系统架构。分别在 Mac ARM64、Windows x64 上运行：
+
+```bash
+uv sync --locked --group build
+uv run --locked --group build pylearn package --target macos-arm64
+# Windows x64：
+uv run --locked --group build pylearn package --target win-x64
+```
+
+产物位于 `outputs/release/`，附带 `.sha256` 校验文件。构建使用独立 Node 服务模式，不依赖 Cloudflare 或开发服务器。打包使用当前网页源码；附带的 `course/` 模板来自 Git HEAD，所以发行前应先提交全部改动。PyInstaller 需要在目标操作系统上原生构建，不能直接跨系统编译。
+
+### 自动 Release
+
+`.github/workflows/release.yml` 在推送 `v*` Tag 时自动执行两平台构建、解压启动测试、网页与静态资源检查；两者都成功后创建并发布 GitHub Release，上传两种压缩包及 SHA-256 文件。只使用仓库内置 `GITHUB_TOKEN`，无需额外密钥。
+
+例如发布一个未使用的版本号（请按实际版本修改）：
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+也可在 Actions 中手动运行 **Release binaries** 验证构建；从分支手动运行只上传 Actions 产物，不创建 Release。

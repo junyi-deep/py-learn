@@ -11,6 +11,7 @@ import { readFoundationMode } from '@/lib/foundation-mode';
 import { RainbowQuestionRail } from '@/components/rainbow-question-rail';
 
 const chapterGroups: FoundationGroup[] = ['基础语法', '进阶语法', '标准库与应用'];
+const practiceQuestions = foundationChapters.flatMap((chapter) => exercisesForChapter(chapter).map((exercise) => ({ chapterId: chapter.id, exerciseId: exercise.id })));
 
 export function FoundationsWorkbench() {
   const [selectedId, setSelectedId] = useState(foundationChapters[0].id);
@@ -43,6 +44,11 @@ export function FoundationsWorkbench() {
   const chapter = useMemo(() => foundationChapters.find((item) => item.id === selectedId) ?? foundationChapters[0], [selectedId]);
   const chapterIndex = foundationChapters.findIndex((item) => item.id === chapter.id);
   const activeProgressId = foundationExerciseProgressId(chapter.id, selectedExerciseId);
+  const questionIndex = practiceQuestions.findIndex((item) => item.chapterId === chapter.id && item.exerciseId === selectedExerciseId);
+  function moveQuestion(offset: number) {
+    const next = practiceQuestions[questionIndex + offset];
+    if (next) selectPracticeQuestion(next.chapterId, next.exerciseId);
+  }
 
   function updateLocation(chapterId: string, exerciseId: string, isPracticeMode: boolean) {
     const url = new URL(window.location.href);
@@ -80,6 +86,8 @@ export function FoundationsWorkbench() {
       selectedExerciseId={selectedExerciseId}
       onSelectExercise={selectExercise}
       practiceMode={practiceMode}
+      previousQuestion={questionIndex > 0 ? () => moveQuestion(-1) : undefined}
+      nextQuestion={questionIndex < practiceQuestions.length - 1 ? () => moveQuestion(1) : undefined}
       draftCode={draftCode[activeProgressId]}
       onDraftChange={(code) => setDraftCode((current) => ({ ...current, [activeProgressId]: code }))}
     />

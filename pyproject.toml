@@ -16,3 +16,8 @@ pylearn = "py_learn.cli:main"
 [tool.uv.build-backend]
 module-name = "py_learn"
 module-root = "meta"
+
+[dependency-groups]
+build = [
+    "pyinstaller>=6.22.3",
+]

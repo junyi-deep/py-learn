@@ -101,11 +101,13 @@ function normalizeOutput(value: string) {
   return value.replace(/\r\n/g, '\n').trimEnd();
 }
 
-export function PythonExercise({ chapter, selectedExerciseId, onSelectExercise, practiceMode = false, draftCode, onDraftChange }: {
+export function PythonExercise({ chapter, selectedExerciseId, onSelectExercise, practiceMode = false, draftCode, onDraftChange, previousQuestion, nextQuestion }: {
   chapter: FoundationChapter;
   selectedExerciseId: string;
   onSelectExercise: (id: string) => void;
   practiceMode?: boolean;
+  previousQuestion?: () => void;
+  nextQuestion?: () => void;
   draftCode?: string;
   onDraftChange?: (code: string) => void;
 }) {
@@ -261,6 +263,10 @@ export function PythonExercise({ chapter, selectedExerciseId, onSelectExercise, 
             <summary className="cursor-pointer font-bold text-ink">卡住了？展开提示</summary>
             <ol className="mt-3 list-decimal space-y-2 pl-4 leading-5">{exercise.hints.map((hint) => <li key={hint}>{hint}</li>)}</ol>
           </details>
+          <nav aria-label="题目翻页" className="mt-6 flex justify-between gap-3 border-t border-ink/10 pt-4">
+            <button type="button" onClick={previousQuestion} disabled={!previousQuestion} className="rounded-xl border border-ink/10 px-4 py-2 text-xs font-bold text-ink hover:bg-cream disabled:cursor-not-allowed disabled:opacity-30">上一题</button>
+            <button type="button" onClick={nextQuestion} disabled={!nextQuestion} className="rounded-xl bg-mint-pale px-4 py-2 text-xs font-bold text-mint-dark hover:bg-mint/50 disabled:cursor-not-allowed disabled:opacity-30">下一题</button>
+          </nav>
         </div>
         <div className="grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(180px,1fr)_minmax(130px,.36fr)_auto] bg-ink">
           <div className="border-b border-white/10 px-5 py-3"><p className="text-xs font-bold text-white">Python 编辑器</p></div>

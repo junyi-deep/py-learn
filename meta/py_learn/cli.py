@@ -160,6 +160,10 @@ def command_build(_: argparse.Namespace) -> int:
     return run_web_script("build")
 
 
+def command_package(args: argparse.Namespace) -> int:
+    return subprocess.call([sys.executable, str(ROOT / "scripts" / "build_binary.py"), "--target", args.target], cwd=ROOT)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="pylearn", description="PyPath 本地学习与验收工具")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -186,6 +190,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     build = subparsers.add_parser("build", help="构建生产版学习网站")
     build.set_defaults(handler=command_build)
+    package = subparsers.add_parser("package", help="构建本机平台的独立发行包（需要 --group build）")
+    package.add_argument("--target", choices=["macos-arm64", "win-x64"], required=True)
+    package.set_defaults(handler=command_package)
     return parser
 
 

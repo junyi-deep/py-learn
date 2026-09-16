@@ -1,0 +1,75 @@
+name: Release binaries
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: macos-arm64
+            archive: tar.gz
+          - os: windows-2022
+            target: win-x64
+            archive: zip
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.17.0'
+          cache: npm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.11.7'
+          python-version: '3.12'
+          enable-cache: true
+      - run: uv sync --locked --group build
+      - run: uv run --locked --group build pylearn package --target ${{ matrix.target }}
+      - run: npx tsc --noEmit
+      - run: uv run --locked python -m unittest discover -s meta/tests -v
+      - name: Test extracted native application
+        run: uv run --locked python scripts/smoke_binary.py outputs/release/PyPath-${{ matrix.target }}.${{ matrix.archive }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PyPath-${{ matrix.target }}
+          path: outputs/release/*
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Publish release after both platforms pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --draft --generate-notes --title "$RELEASE_TAG"
+          fi
+          gh release upload "$RELEASE_TAG" artifacts/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false
