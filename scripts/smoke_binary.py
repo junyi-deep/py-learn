@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import re
@@ -14,12 +15,32 @@ import time
 import urllib.request
 
 
+def cleanup_workspace(workspace: tempfile.TemporaryDirectory, attempts: int = 40) -> None:
+    """Windows can briefly retain executable handles after taskkill returns."""
+    for attempt in range(attempts):
+        try:
+            workspace.cleanup()
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(.25)
+
+
+@contextmanager
+def smoke_workspace():
+    workspace = tempfile.TemporaryDirectory(prefix="pypath-smoke-")
+    try:
+        yield Path(workspace.name)
+    finally:
+        cleanup_workspace(workspace)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("archive", type=Path)
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory(prefix="pypath-smoke-") as temporary:
-        root = Path(temporary)
+    with smoke_workspace() as root:
         shutil.unpack_archive(args.archive.resolve(), root)
         executable = root / "PyPath" / ("PyPath.exe" if os.name == "nt" else "PyPath")
         with socket.socket() as probe:
@@ -46,20 +67,24 @@ def main() -> None:
                 for route in ["/", "/projects", "/algorithms"]:
                     with opener.open(base + route, timeout=15) as response:
                         assert response.status == 200, route
+                        response.read()
                 assets = re.findall(r'(?:src|href)="(/[^"?]+\.(?:js|css))', html)
                 assert assets, "No client assets in HTML"
                 for asset in set(assets):
                     with opener.open(base + asset, timeout=15) as response:
                         assert response.status == 200 and response.read(), asset
-                print(f"PASS: native launcher, four routes, {len(set(assets))} assets; no host Node/Python required")
             finally:
                 if os.name == "nt":
                     subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"], check=False)
                 else:
-                    os.killpg(process.pid, signal.SIGTERM)
+                    try:
+                        os.killpg(process.pid, signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
                 process.wait(timeout=10)
                 log.seek(0)
                 print(log.read())
+    print(f"PASS: native launcher, four routes, {len(set(assets))} assets and workspace cleanup; no host Node/Python required")
 
 
 if __name__ == "__main__":
