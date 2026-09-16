@@ -79,7 +79,13 @@ uv run --locked --group build pylearn package --target win-x64
 
 ### 自动 Release
 
-`.github/workflows/release.yml` 在推送 `v*` Tag 时自动执行两平台构建、解压启动测试、网页与静态资源检查；两者都成功后创建并发布 GitHub Release，上传两种压缩包及 SHA-256 文件。只使用仓库内置 `GITHUB_TOKEN`，无需额外密钥。
+`.github/workflows/release.yml` 在推送任意 Tag（包括 `v0.2.0`、`0.2.0` 或带 `/` 的 Tag）时自动触发：
+
+1. 为该 Tag 自动创建 Release 草稿并生成发布说明。
+2. 在 macOS ARM64、Windows x64 上构建，并进行解压启动、网页和静态资源检查。
+3. 两平台均成功后校验 SHA-256，上传两个压缩包及校验文件，自动将 Release 发布为公开版本。
+
+构建失败时保留草稿，不发布不完整的新版本；在 Actions 中重跑失败任务即可继续，上传时会更新同名附件。只使用仓库内置 `GITHUB_TOKEN`，无需额外密钥。Tag 必须指向包含该工作流配置的提交。
 
 例如发布一个未使用的版本号（请按实际版本修改）：
 
@@ -88,4 +94,4 @@ git tag v0.2.0
 git push origin v0.2.0
 ```
 
-也可在 Actions 中手动运行 **Release binaries** 验证构建；从分支手动运行只上传 Actions 产物，不创建 Release。
+也可在 Actions 中手动运行 **Release binaries**：选择分支时只上传 Actions 产物；选择已有 Tag 时执行完整 Release 发布流程。
