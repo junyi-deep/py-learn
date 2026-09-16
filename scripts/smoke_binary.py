@@ -26,7 +26,7 @@ def main() -> None:
             probe.bind(("127.0.0.1", 0))
             port = probe.getsockname()[1]
         env = {**os.environ, "PATH": ""}
-        with (root / "server.log").open("w+") as log:
+        with (root / "server.log").open("w+", encoding="utf-8", errors="replace") as log:
             process = subprocess.Popen([str(executable), "--no-browser", "--port", str(port)], cwd=root, env=env, stdout=log, stderr=log, start_new_session=os.name != "nt")
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
             base = f"http://127.0.0.1:{port}"

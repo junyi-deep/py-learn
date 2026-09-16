@@ -197,5 +197,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     args = build_parser().parse_args()
     raise SystemExit(args.handler(args))
